@@ -6,57 +6,51 @@ Created on Tue Jan 17 06:54:31 2017
 @author: enhoshen
 """
 import numpy as np
-
-
-# tensorflow input tensor:[batch , in_height, in_width, in_channels ]
-#            filter tensor:[height, width, in_channels, out_channels]
-# define input shape:[batch , in_height, in_width, in_channels ]
-#        filter shape:[height, width, in_channels, out_channels]
+import * from parameter
 
 def Unit(num):
-	_unit=0
+	i=0
+	_str=''
 	_num=float(num)
+	_unit=[0,0,0,0,0]
 	while( _num>1024.0):
+		_unit[4-i]=_num % 1024.0
 		_num = _num/ 1024.0
-		_unit += 1
-	return str(_num)+{0:'',1:'K',2:'M',3:'G',4:'T'}[_unit]
+		i += 1
+	_unit[4-i]=_num
+	for i , u in enumerate _unit:
+		if u != 0:
+			_str+= u+{0:'T',1:'G',2:'M',3:'K',4:''}[i]  
+	return _str
+
 class Layer:
-	conf_arg={ 'type':0      ,
-			   'stride':1    ,
-			   'batch':2     ,
-			   'channels':3  ,
-			   'filters':4   ,
-			   'in_prec':5   ,
-			   'tp_prec':6   ,
-			   'o_prec' :7  ,
-			   'fps_goal':30,
-			   ''
-	}
-	tf_in_arg={'batch':0,
-			   'in_height':1,
-			   'in_width' :2,
-			   'in_channel':3
-	}
-	tf_flt_arg={'height':0,
-			    'width' :1,
-				'in_channel':2,
-				'out_channel':3
-	}
-	def __init__(self, input_shape ,filter_shape,conf=['conv',1,4,3,1,1,12,1]):
-		self.input_shape=input_shape
-		self.filter_shape=filter_shape
-		self.conf=conf
+
+
+	def __init__(self,com_arg=layer_com_arg_def,in_arg=in_arg_def,flt_arg=flt_arg_def):
+		self.type       = com_arg['type']
+		self.stride      = com_arg['stride']
+		self.batch      = com_arg['batch']
+		self.channels   = com_arg['channels']
+		self.filters    = com_arg['filters']
+		self.in_prec    = com_arg['in_prec']
+		self.tp_prec    = com_arg['tp_prec']
+		self.o_prec     = com_arg['o_prec']
+		self.fps_goal   = com_arg['fps_goal']
+		
+		self.in_h  = in_arg['in_height']
+		self.in_w  = in_arg['in_width']
+		self.in_ch = in_arg['in_channel']
+		
+		self.flt_h = flt_arg['flt_height']
+		self.flt_w = flt_arg['flt_widht']
+		self.out_ch= flt_arg['out_channel']
+
 	def XB_count(self):
-		_batch = self.conf[self.conf_arg['batch']]
-		_stride = self.conf[self.conf_arg['stride']]
-		_flt_wid= self.filter_shape[self.tf_flt_arg['width']]
-		_flt_height= self.filter_shape[self.tf_flt_arg['width']]
-		_in_ch  = self.input_shape[self.tf_in_arg['in_channel']]
-		o_pixel=_flt_wid*_flt_height*_in_ch
-		o_frame=o_pixel*(self.input_shape[1]*self.input_shape[2]/_stride/_stride)
-		o_volume=o_frame*self.filter_shape[3]
-		_precision=self.conf[self.conf_arg['in_prec']]*self.conf[self.conf_arg['o_prec']]
-		return o_volume*_precision*_batch
+		o_pixel=self.flt_h*self.flt_w*self.in_ch
+		o_frame=o_pixel*self.in_h*self.in_w/(self.stride*self.stride)
+		o_volume=o_frame*self.self.out_ch
+		precision=self.in_prec*self.
+		return o_volume*precision*self.batch
 	def Size(self):
 		_weight=self.filter_shape[0]*self.filter_shape[1]*self.filter_shape[2]*self.filter_shape[3]*self.filter_shape[4]/8
 		_input= self.input_shape[0]*self.input_shape[1]*self.input_shape[2]*self.input_shape[3]*self.input_shape[4]/8
@@ -83,12 +77,7 @@ class Model:
 		#xnor bitcount counts
 		return Unit(_xbc)
 class Architecture:
-	conf_arg={ 'PE_width':0    ,
-			   'PE_height':1   ,
-			   'PE_type':2     ,
-			   'gbuffer_size':3, #in KB
-			   'bc_width':4 # in BYTE
-	}
+
 	def __init__(self,model, conf=[14,10,'1D',5,4]):
 		self.name='generated'
 		self.model=model
