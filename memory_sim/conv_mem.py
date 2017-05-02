@@ -23,6 +23,12 @@ def Unit(num):
 		if u != 0:
 			_str+= str(u)+{0:'T',1:'G',2:'M',3:'K',4:''}[i] 
 	return _str
+def str2unit(str):
+	for i,c in enumerate(str):
+		if c.isdigit() is False:
+			break
+	unit={'GB':8*1e9 ,'G':1e9,'MB':8*1e6 , 'M':1e6 ,'KB':8*1e3, 'K':1e3 ,'B':8 , '': 1}[str[i:]]
+	return float(str[:i])*unit 
 
 class Layer:
 
@@ -92,19 +98,34 @@ class Model:
 		in_size =  [layer.Size()[1]for layer in self.layers]	
 		return w_size,in_size ,Unit(np.sum(w_size))+' Byte for weights; '+Unit(np.sum(in_size))+' Byte for activations'
 		
+class PE:
+	def __init__(self, buf_size , com_arg=None  ):
+		self.buf_size=str2unit(buf_size)  # in bytes
+		self.throughput=self.Throughput()
+		self.latency = self.Latency()
+	def Throughput(self): # in XB count/
+		return 16
+	def Latency(self):
+		return 100
+class Arch:
 
-class Architecture:
-
-	def __init__(self, model ,shape , com_arg = None):
+	def __init__(self, freq ,PE ,model ,shape , com_arg = None):
 		
-		self.pe_w= shape[0]
-		self.pe_h= shape[1]
-		self.gbuf_size=shape[2]
-		self.bc_w= shape[3]
+		self.f=str2unit(freq)
+		self.PE = PE
+		self.pe_w     =shape[0]
+		self.pe_h     =shape[1]
+		self.gbuf_size=str2unit(shape[2])
+		self.bc_w     =shape[3]
 		self.model=model
 		
-	def peak_performance(self):
-		return 
+	def peak_performance(self , utilize):
+		pe_num=self.pe_w*self.pe_h
+		peak_throughput=pe_num*self.PE.throughput
+		print self.f
+		peak_xbc=self.f*peak_throughput*utilize
+		fps=peak_xbc/np.sum(self.model.XBC())
+		return  peak_xbc , fps
 	def buffer_requirment(self,i):
 		_w,_x=model.layers[i].Size()
 		_conf =model.layers[i].conf
@@ -125,14 +146,17 @@ def alex_model():
 	l1=Layer([224,224,3,8],[11,11,64,1],{'type':'conv','stride':4,'tp_prec':12,'fps_goal':30})
 	l2=Layer([55,55,64,1],[5,5,128,1],{'type':'conv','stride':2,'tp_prec':12,'fps_goal':30})
 	return [l1,l2]
-test=Layer([7,7,64,1],[3,3,128,1])
-test2=Layer([7,7,128,1],[3,3,64,1])
-
-Wrap=[test,test2,test2]
-print test.Size()[2]
-rep , _ = test.Do_row(4 , 7, 1 , 16)
-print str(rep) + 'repetition'
-print _
-m1=Model(Wrap)
-print m1.Size()
-
+if __name__ == "__main__":
+	test=Layer([7,7,64,1],[3,3,128,1])
+	test2=Layer([7,7,128,1],[3,3,64,1])
+	
+	Wrap=[test,test2,test2]
+	print test.Size()[2]
+	rep , _ = test.Do_row(4 , 7, 1 , 16)
+	print str(rep) + 'repetition'
+	print _
+	m1=Model(Wrap)
+	print m1.Size()
+	p1=PE('128B')
+	a1=Arch( '100M' , p1, m1, [14,12,'10KB',16] )
+	print a1.peak_performance(0.5)

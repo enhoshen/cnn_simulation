@@ -23,7 +23,7 @@ arch_com_arg_def={ 'PE_width':14    ,
 				'PE_height':12   ,
 				'PE_type':'1D'     ,
 				'gbuffer_size':10, #in KB
-				'bc_width':4 # bit counting operation in BYTE
+				'bc_width':16 # bit counting operation 
 		}
 # tensorflow input tensor:[batch , in_height, in_width, in_channels ]
 #            filter tensor:[height, width, in_channels, out_channels]
