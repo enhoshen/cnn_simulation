@@ -1,3 +1,4 @@
+
 layer_com_arg_def={ 'type':'conv'  ,  # common arguments
 				'stride':1    ,
 				'batch':4     ,
@@ -25,6 +26,7 @@ arch_com_arg_def={ 'PE_width':14    ,
 				'gbuffer_size':10, #in KB
 				'bc_width':16 # bit counting operation 
 		}
+
 # tensorflow input tensor:[batch , in_height, in_width, in_channels ]
 #            filter tensor:[height, width, in_channels, out_channels]
 # define input shape:[batch , in_height, in_width, in_channels ]
